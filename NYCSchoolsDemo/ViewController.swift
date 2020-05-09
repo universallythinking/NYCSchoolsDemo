@@ -84,7 +84,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         let url = URL(string: "https://data.cityofnewyork.us/resource/f9bf-2cp4.json?DBN=" + school)!
         let task = URLSession.shared.dataTask(with: url) {(data, response, error) in
             guard let data = data else { return }
-            self.schoolList = String(data: data, encoding: .utf8)!
             if let schoolResults = try? JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [[String: Any]] {
                 for object in schoolResults! {
                     self.name = object["school_name"] as! String
@@ -99,17 +98,20 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     self.message = self.message + readingScore + " and an average Writing Score of "
                     self.message = self.message + writingScore + "."
                 }
+                if (schoolResults?.count == 0) {
+                    self.message = "There is no data for the selected school..."
+                    self.name = "Error"
+                }
             }
         }
         task.resume()
         timer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(self.showAlert), userInfo: nil, repeats: true)
-        showAlert()
     }
     
     @objc func showAlert() {
         if (self.message.count > 0) {
             timer?.invalidate()
-            let alert = UIAlertController(title: "SAT Data for " + self.name, message: message, preferredStyle: .alert)
+            let alert = UIAlertController(title: self.name, message: message, preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
                 switch action.style{
                 case .default:
