@@ -128,7 +128,5 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             self.name = ""
         }
     }
-
-
 }
 
