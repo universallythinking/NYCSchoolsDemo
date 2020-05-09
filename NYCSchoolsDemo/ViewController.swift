@@ -124,6 +124,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     
                 }}))
             self.present(alert, animated: true, completion: nil)
+            self.message = ""
+            self.name = ""
         }
     }
 
