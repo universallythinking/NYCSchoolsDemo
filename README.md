@@ -9,3 +9,5 @@ This also applies to the iOS version.
 The UI is not pretty, but it is functional.
 
 I can resubmit this during the week of May 11th, if needed.  I am currently out of town for a family event and will have more time to work on this over the next week.
+
+I can also rewrite this for Android, and for iOS in Objective C.
