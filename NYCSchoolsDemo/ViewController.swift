@@ -13,15 +13,16 @@ import SwiftyJSON
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     var message: String = ""
     var name: String = ""
-    var schoolList: String? = nil
     var schoolData = [String]()
     var schools = [String]()
-    var timer: Timer? = nil
     
     private var schoolTableView: UITableView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
         fetchSchools{_ in
         }
     }
@@ -40,28 +41,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         return cell
     }
     
-    func fetchSchools(completionHandler: @escaping ([String]) -> Void) {
-        let url = URL(string: "https://data.cityofnewyork.us/resource/s3k6-pzi2.json")!
-        
-        let task = URLSession.shared.dataTask(with: url) {(data, response, error) in
-            guard let data = data else { return }
-            self.schoolList = String(data: data, encoding: .utf8)!
-            if let schoolArray = try? JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [[String: Any]] {
-                for object in schoolArray! {
-                    let name = object["school_name"]
-                    let uid = object["dbn"]
-                    self.schoolData.append(uid as! String)
-                    self.schools.append(name as! String)
-                }
-            }
-        }
-        task.resume()
-        timer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(self.addSchoolsToView), userInfo: nil, repeats: true)
-    }
-
     @objc func addSchoolsToView() {
         if(self.schoolData.count > 1) {
-            timer?.invalidate()
             let barHeight: CGFloat = UIApplication.shared.statusBarFrame.size.height
             let displayWidth: CGFloat = self.view.frame.width
             let displayHeight: CGFloat = self.view.frame.height
@@ -70,8 +51,28 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             schoolTableView.register(UITableViewCell.self, forCellReuseIdentifier: "MyCell")
             schoolTableView.dataSource = self
             schoolTableView.delegate = self
-            self.view.addSubview(schoolTableView)
+            self.view.addSubview(self.schoolTableView)
         }
+    }
+    
+    func fetchSchools(completionHandler: @escaping ([String]) -> Void) {
+        let url = URL(string: "https://data.cityofnewyork.us/resource/s3k6-pzi2.json")!
+        
+        let task = URLSession.shared.dataTask(with: url) {(data, response, error) in
+            guard let data = data else { return }
+            if let schoolArray = try? JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [[String: Any]] {
+                for object in schoolArray! {
+                    let name = object["school_name"]
+                    let uid = object["dbn"]
+                    self.schoolData.append(uid as! String)
+                    self.schools.append(name as! String)
+                }
+                DispatchQueue.main.async {
+                    self.addSchoolsToView()
+                }
+            }
+        }
+        task.resume()
     }
     
     func constructMessage(takers: String, mathScore: String, readingScore: String, writingScore: String) {
@@ -96,14 +97,15 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     self.message = "There is no data for the selected school..."
                 }
             }
+            DispatchQueue.main.async {
+                self.showAlert()
+            }
         }
         task.resume()
-        timer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(self.showAlert), userInfo: nil, repeats: true)
     }
     
     @objc func showAlert() {
         if (self.message.count > 0) {
-            timer?.invalidate()
             let alert = UIAlertController(title: self.name, message: message, preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
                 switch action.style{
