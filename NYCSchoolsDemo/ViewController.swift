@@ -16,7 +16,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var schoolList: String? = nil
     var schoolData = [String]()
     var schools = [String]()
-    let myArray: NSArray = ["First","Second","Third"]
     var timer: Timer? = nil
     
     private var schoolTableView: UITableView!
@@ -26,7 +25,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         fetchSchools{_ in
         }
     }
-    //TableView handlers
+
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         viewScore(school: self.schoolData[indexPath.row])
     }
@@ -41,8 +40,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         return cell
     }
     
-    
-    //Get all school data
     func fetchSchools(completionHandler: @escaping ([String]) -> Void) {
         let url = URL(string: "https://data.cityofnewyork.us/resource/s3k6-pzi2.json")!
         
@@ -62,11 +59,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         timer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(self.addSchoolsToView), userInfo: nil, repeats: true)
     }
 
-    //Add schools to TableView
     @objc func addSchoolsToView() {
         if(self.schoolData.count > 1) {
             timer?.invalidate()
-            print(self.schoolData.count)
             let barHeight: CGFloat = UIApplication.shared.statusBarFrame.size.height
             let displayWidth: CGFloat = self.view.frame.width
             let displayHeight: CGFloat = self.view.frame.height
@@ -78,29 +73,28 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             self.view.addSubview(schoolTableView)
         }
     }
-
-    //View a school's data
+    
+    func constructMessage(takers: String, mathScore: String, readingScore: String, writingScore: String) {
+        self.message = "You selected " + self.name + ". This school had a total of "
+        self.message = self.message + takers + " SAT Takers with an average Math Score of "
+        self.message = self.message + mathScore + ", an average Reading Score of "
+        self.message = self.message + readingScore + " and an average Writing Score of "
+        self.message = self.message + writingScore + "."
+    }
+    
     func viewScore(school: String) {
+        var uid:String = "", takers:String = "", mathScore:String = "", readingScore:String = "", writingScore:String = ""
         let url = URL(string: "https://data.cityofnewyork.us/resource/f9bf-2cp4.json?DBN=" + school)!
         let task = URLSession.shared.dataTask(with: url) {(data, response, error) in
             guard let data = data else { return }
             if let schoolResults = try? JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [[String: Any]] {
                 for object in schoolResults! {
                     self.name = object["school_name"] as! String
-                    let uid = object["dbn"]
-                    let takers = object["num_of_sat_test_takers"] as! String
-                    let mathScore = object["sat_math_avg_score"] as! String
-                    let readingScore = object["sat_critical_reading_avg_score"] as! String
-                    let writingScore = object["sat_writing_avg_score"] as! String
-                    self.message = "You selected " + self.name + ". This school had a total of "
-                    self.message = self.message + takers + " SAT Takers with an average Math Score of "
-                    self.message = self.message + mathScore + ", an average Reading Score of "
-                    self.message = self.message + readingScore + " and an average Writing Score of "
-                    self.message = self.message + writingScore + "."
+                    self.constructMessage(takers: object["num_of_sat_test_takers"] as! String, mathScore: object["sat_math_avg_score"] as! String, readingScore: object["sat_critical_reading_avg_score"] as! String, writingScore: object["sat_writing_avg_score"] as! String)
                 }
                 if (schoolResults?.count == 0) {
-                    self.message = "There is no data for the selected school..."
                     self.name = "Error"
+                    self.message = "There is no data for the selected school..."
                 }
             }
         }
@@ -116,15 +110,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 switch action.style{
                 case .default:
                     print("default")
-                    
                 case .cancel:
                     print("cancel")
-                    
                 case .destructive:
                     print("destructive")
-                    
-                    
-                }}))
+                }
+            }))
             self.present(alert, animated: true, completion: nil)
             self.message = ""
             self.name = ""
